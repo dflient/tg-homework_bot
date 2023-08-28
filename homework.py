@@ -27,8 +27,7 @@ HOMEWORK_VERDICTS = {
 
 
 def check_tokens():
-    """Функция check_tokens() проверяет доступность переменных окружения, которые необходимы для работы программы."""
-
+    """Функция check_tokens проверяет доступность переменных окружения."""
     if PRACTICUM_TOKEN and TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
         return True
     else:
@@ -37,8 +36,7 @@ def check_tokens():
 
 
 def send_message(bot, message):
-    """Функция send_message() отправляет сообщение в Telegram чат, определяемый переменной окружения TELEGRAM_CHAT_ID."""
-
+    """Функция send_message отправляет сообщение в Telegram чат."""
     if TELEGRAM_CHAT_ID:
         try:
             bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
@@ -51,8 +49,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(timestamp):
-    """Функция get_api_answer() делает запрос к единственному эндпоинту API-сервиса."""
-
+    """Функция get_api_answer делает запрос к эндпоинту API-сервиса."""
     params = {'from_date': timestamp}
 
     try:
@@ -64,13 +61,15 @@ def get_api_answer(timestamp):
     if response.status_code == 200:
         return response.json()
     else:
-        logging.error(f'Произошла ошибка при запросе к API. Статус страницы: {response.status_code}')
+        logging.error(
+            f'Произошла ошибка при запросе к API. '
+            f'Статус страницы: {response.status_code}'
+        )
         raise ConnectionError(f'Статус страницы: {response.status_code}')
 
 
 def check_response(response):
-    """Функция check_response() проверяет ответ API на соответствие документации."""
-
+    """Функция check_response проверяет ответ на соответствие документации."""
     if type(response) != dict:
         logging.error("Ответ API не соответствует документации - 'TypeError'.")
         raise TypeError('Тип данных в ответе API не соответствует ожидаемому.')
@@ -81,16 +80,19 @@ def check_response(response):
         if isinstance(response['homeworks'], list):
             logging.debug('Ответ API соответствует документации')
         else:
-            logging.error("Ответ API не соответствует документации - 'TypeError'.")
-            raise TypeError('Тип данных в ответе API не соответствует ожидаемому.')
+            logging.error(
+                "Ответ API не соответствует документации - 'TypeError'."
+            )
+            raise TypeError(
+                'Тип данных в ответе API не соответствует ожидаемому.'
+            )
     else:
-        logging.error(f'Ответ API не соответствует документации')
+        logging.error('Ответ API не соответствует документации')
         raise KeyError('Отсутствуют ключи Домашки')
 
 
 def parse_status(homework):
-    """Функция parse_status() извлекает из информации о конкретной домашней работе статус этой работы."""
-
+    """Функция parse_status извлекает статус домашней работы."""
     if 'homework_name' not in homework:
         logging.error("В ответе API нет ключа 'homework_name'.")
         raise KeyError("KeyError('homework_name')")
@@ -111,7 +113,6 @@ def parse_status(homework):
 
 def main():
     """Основная логика работы бота."""
-
     logging.basicConfig(
         level=logging.DEBUG,
         format='%(asctime)s, %(levelname)s, %(message)s',
