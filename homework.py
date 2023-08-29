@@ -1,7 +1,7 @@
 import logging
 import os
 import time
-
+from http import HTTPStatus
 import requests
 import telegram
 from dotenv import load_dotenv
@@ -28,24 +28,23 @@ HOMEWORK_VERDICTS = {
 
 def check_tokens():
     """Функция check_tokens проверяет доступность переменных окружения."""
-    if PRACTICUM_TOKEN and TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
+    tokens = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
+    token = all(token for token in tokens)
+
+    if token:
         return True
     else:
         logging.critical('Отсутствуют переменные окружения')
-        raise EnvironmentError('Отсутствуют переменные окружения')
+        return False
 
 
 def send_message(bot, message):
     """Функция send_message отправляет сообщение в Telegram чат."""
-    if TELEGRAM_CHAT_ID:
-        try:
-            bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-            logging.debug('Сообщение успешно отправлено')
-        except telegram.TelegramError as error:
-            logging.error(f'Произошла ошибка при отправке сообщения: {error}')
-    else:
-        logging.critical(f'Отсутствуеют переменная {TELEGRAM_CHAT_ID}')
-        raise EnvironmentError(f'Отсутствуеют переменная {TELEGRAM_CHAT_ID}')
+    try:
+        bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
+        logging.debug('Сообщение успешно отправлено')
+    except telegram.TelegramError as error:
+        logging.error(f'Произошла ошибка при отправке сообщения: {error}')
 
 
 def get_api_answer(timestamp):
@@ -58,8 +57,11 @@ def get_api_answer(timestamp):
     except requests.exceptions.RequestException as error:
         logging.error(f'При запросе к API произошла ошибка: {error}')
 
-    if response.status_code == 200:
-        return response.json()
+    if response.status_code == HTTPStatus.OK:
+        try:
+            return response.json()
+        except ValueError as error:
+            logging.error(f'При преобразовании возникла ошибка: {error}.')
     else:
         logging.error(
             f'Произошла ошибка при запросе к API. '
@@ -70,7 +72,7 @@ def get_api_answer(timestamp):
 
 def check_response(response):
     """Функция check_response проверяет ответ на соответствие документации."""
-    if type(response) != dict:
+    if not isinstance(response, dict):
         logging.error("Ответ API не соответствует документации - 'TypeError'.")
         raise TypeError('Тип данных в ответе API не соответствует ожидаемому.')
 
@@ -97,11 +99,12 @@ def parse_status(homework):
         logging.error("В ответе API нет ключа 'homework_name'.")
         raise KeyError("KeyError('homework_name')")
 
-    try:
-        homework_name = homework.get('homework_name')
-        status = homework.get('status')
-    except Exception as error:
-        logging.error(f'{error} - не удалось извлесь информацию о домашке.')
+
+    homework_name = homework.get('homework_name')
+    if not homework_name:
+        logging.error('Не удалось извлесь информацию о домашке.')
+
+    status = homework.get('status')
 
     if status in HOMEWORK_VERDICTS:
         verdict = HOMEWORK_VERDICTS[status]
@@ -113,13 +116,10 @@ def parse_status(homework):
 
 def main():
     """Основная логика работы бота."""
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s, %(levelname)s, %(message)s',
-    )
     logging.debug('Бот запущен')
 
-    check_tokens()
+    if not check_tokens():
+        raise EnvironmentError('Отсутствуют переменные окружения')
 
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
@@ -150,4 +150,8 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s, %(levelname)s, %(message)s',
+    )
     main()
