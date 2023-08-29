@@ -99,7 +99,6 @@ def parse_status(homework):
         logging.error("В ответе API нет ключа 'homework_name'.")
         raise KeyError("KeyError('homework_name')")
 
-
     homework_name = homework.get('homework_name')
     if not homework_name:
         logging.error('Не удалось извлесь информацию о домашке.')
