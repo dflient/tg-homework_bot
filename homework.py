@@ -2,6 +2,7 @@ import logging
 import os
 import time
 from http import HTTPStatus
+
 import requests
 import telegram
 from dotenv import load_dotenv
@@ -31,11 +32,7 @@ def check_tokens():
     tokens = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
     token = all(token for token in tokens)
 
-    if token:
-        return True
-    else:
-        logging.critical('Отсутствуют переменные окружения')
-        return False
+    return token
 
 
 def send_message(bot, message):
@@ -118,6 +115,7 @@ def main():
     logging.debug('Бот запущен')
 
     if not check_tokens():
+        logging.critical('Отсутствуют переменные окружения')
         raise EnvironmentError('Отсутствуют переменные окружения')
 
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
