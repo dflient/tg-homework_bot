@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import time
 from http import HTTPStatus
 
@@ -29,10 +30,7 @@ HOMEWORK_VERDICTS = {
 
 def check_tokens():
     """Функция check_tokens проверяет доступность переменных окружения."""
-    tokens = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
-    token = all(token for token in tokens)
-
-    return token
+    return all((PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID))
 
 
 def send_message(bot, message):
@@ -116,7 +114,7 @@ def main():
 
     if not check_tokens():
         logging.critical('Отсутствуют переменные окружения')
-        raise EnvironmentError('Отсутствуют переменные окружения')
+        sys.exit('Отсутствуют переменные окружения')
 
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
